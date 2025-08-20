@@ -1,0 +1,109 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  run_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+
+
+    - name: Checkout leap-c
+      uses: actions/checkout@v4
+      with:
+        path: ${{github.workspace}}/leap_c
+        submodules: 'recursive'
+
+    - name: Download acados artifacts (build, lib, include) into acados repository
+      uses: actions/download-artifact@v4
+      with:
+        path: ${{github.workspace}}/leap_c/external/acados
+        repository: acados/acados
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: 16416756341
+
+    - name: Install Tera
+      working-directory: ${{github.workspace}}/leap_c/external/acados
+      shell: bash
+      run: |
+        .github/linux/install_tera.sh
+
+    - name: Install micromamba
+      shell: bash
+      run: |
+        "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
+        # Add micromamba to PATH for subsequent steps
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        # Initialize micromamba for the shell
+        echo 'eval "$(micromamba shell hook --shell=bash)"' >> $GITHUB_ENV
+
+    - name: Export Paths
+      working-directory: ${{github.workspace}}
+      shell: bash
+      run: |
+        echo "ACADOS_SOURCE_DIR=${{github.workspace}}/leap_c/external/acados" >> $GITHUB_ENV
+        echo "ACADOS_INSTALL_DIR=${{github.workspace}}/leap_c/external/acados" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=${{github.workspace}}/leap_c/external/acados/lib" >> $GITHUB_ENV
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Create and activate micromamba environment
+      shell: bash
+      run: |
+        # Source the micromamba activation
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba create -n leapc_env python=3.11
+        micromamba activate leapc_env
+        echo "PYTHONPATH=$(python -c 'import sys; print(":".join(sys.path))')" >> $GITHUB_ENV
+        # Make activation persistent across steps
+        echo "MICROMAMBA_ACTIVE_ENV=leapc_env" >> $GITHUB_ENV
+        # Set PATH to include the micromamba environment's bin directory
+        echo "$CONDA_PREFIX/bin" >> $GITHUB_PATH
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install Python interface
+      working-directory: ${{github.workspace}}/leap_c/external/acados
+      run: |
+        # Activate the micromamba environment
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba activate leapc_env
+        # Install packages
+        pip install --upgrade pip
+        pip install interfaces/acados_template
+        # micromamba install -y -c conda-forge pinocchio=3.6.0
+
+    - name: Install leap_c
+      working-directory: ${{github.workspace}}/leap_c
+      run: |
+        # Activate the micromamba environment
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba activate leapc_env
+        # Install packages
+        pip install -e .[test]
+        pip install torch --extra-index-url https://download.pytorch.org/whl/cpu
+
+    - name: Run leap_c tests
+      working-directory: ${{github.workspace}}/leap_c
+      run: |
+        # Activate the micromamba environment
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba activate leapc_env
+        # Run tests
+        pwd
+        pytest tests -vv -s

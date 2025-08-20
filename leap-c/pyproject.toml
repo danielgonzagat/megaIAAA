@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "leap-c"
+version = "2024.0.0"
+dependencies = ["gymnasium", "scipy", "numpy", "pandas", "ruff"]
+
+requires-python = ">=3.11"
+authors = [{ name = "Dirk Reinhardt", email = "dirk.p.reinhardt@ntnu.no" }]
+maintainers = [{ name = "Dirk Reinhardt", email = "dirk.p.reinhardt@ntnu.no" }]
+description = "Learning Predictive Control"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+keywords = [
+  "Reinforcement Learning",
+  "Imitation Learning",
+  "Model Predictive Control",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "pygame", "moviepy", "wandb", "tensorboard", "gymnasium[mujoco]", "numpy-quaternion", "matplotlib", "PyQt5"]
+rendering = ["pygame", "moviepy"]
+docs = ["sphinx", "sphinx_rtd_theme", "myst-parser"]
+dev = ["leap_c[rendering]", "leap_c[docs]", "leap_c[test]", "pre-commit"]
+wandb = ["wandb"]
+
+[tool.setuptools]
+packages = ["leap_c"]
+
+
+[project.urls]
+Repository = "https://github.com/leap-c/leap-c"
+"Bug Tracker" = "https://github.com/leap-c/leap-c/issues"
+
+[tool.pytest.ini_options]
+testpaths = "tests"
