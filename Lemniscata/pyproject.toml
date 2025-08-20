@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lemnisiana-iaaa"
+version = "0.33.0"
+description = "Lemnisiana IAAA — Autoevolutive Autonomous AI framework (R33 All-in-One)."
+readme = "README.md"
+authors = [{name = "Lemnisiana/Manus AI + Daniel Penin"}]
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+lemnisiana-rzero = "lemnisiana.rzero.on_policy:cli"
+lemnisiana-ttddr = "lemnisiana.ttddr.ttddr:cli"
+lemnisiana-dualver = "lemnisiana.verifiers.dual_verifier:cli"
+lemnisiana-dashboard = "lemnisiana.dashboard.app:cli"
+lemnisiana-train-lora = "lemnisiana.providers.peft_lora:cli"

@@ -1,0 +1,30 @@
+# Core
+numpy
+pandas
+scikit-learn
+scipy
+pydantic>=2
+orjson
+pyyaml
+rich
+tenacity
+tqdm
+
+# LLM providers
+openai>=1.40.0
+httpx
+tiktoken
+ollama
+
+# Training / adapters
+torch
+transformers
+peft
+
+# API / Dashboard / Metrics
+fastapi
+uvicorn
+prometheus-client
+matplotlib
+
+# Optional: security & containers (user applies at runtime)
