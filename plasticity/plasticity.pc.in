@@ -1,0 +1,10 @@
+libdir=@CMAKE_SOURCE_PATH@/lib
+includedir=@CMAKE_SOURCE_PATH@/include
+hppdir=@CMAKE_SOURCE_PATH@/hpp
+
+Name: @CMAKE_PROJECT_NAME@
+Description: @CMAKE_PROJECT_DESCRIPTION@
+
+Version: @PLASTICITY_VERSION@
+Libs: -L${libdir} -l@CMAKE_STATIC_LIBRARY_PREFIX@plasticity/lib/
+Cflags: -I${includedir} -I${hppdir}

@@ -1,0 +1,80 @@
+name: Python
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.cfg.os }}
+    name: ${{ matrix.cfg.os }}@${{ matrix.cfg.python-version }}
+
+    strategy:
+      matrix:
+        cfg:
+          - {os: ubuntu-latest, cc: gcc, cxx: g++, python-version: 3.6}
+          - {os: ubuntu-latest, cc: gcc, cxx: g++, python-version: 3.7}
+          - {os: ubuntu-latest, cc: gcc, cxx: g++, python-version: 3.8}
+          - {os: ubuntu-latest, cc: gcc, cxx: g++, python-version: 3.9}
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v1
+      with:
+        submodules: recursive
+
+    - name: Set up Python ${{ matrix.cfg.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.cfg.python-version }}
+
+    - name: Get latest CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Install compiler and dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y ${{ matrix.cfg.cxx }}
+
+        echo "CC=${{ matrix.cfg.cc }}" >> $GITHUB_ENV
+        echo "CXX=${{ matrix.cfg.cxx }}" >> $GITHUB_ENV
+
+        # Install the Eigen Library
+        sudo apt-get install -y libeigen3-dev
+
+    - name: Install dependencies
+      run: |
+
+        python3 -m pip install --upgrade pip
+        python3 -m pip install flake8 pytest
+        python3 -m pip install -r requirements.txt
+
+    - name: Install testing dependencies
+      run: |
+        python3 -m pip install codecov pytest-cov
+
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        python3 -m flake8 ./plasticity --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        # python3 -m flake8 ./plasticity --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Install plasticity
+      run: |
+        python3 setup.py develop --user
+
+    #- name: Test with pytest
+    #  env:
+    #    LD_LIBRARY_PATH: ${{ github.workspace }}/lib/ # for Linux
+    #  run: |
+    #    python3 -m pytest ./testing/ --cov=plasticity --cov-config=.coveragerc

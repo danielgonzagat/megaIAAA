@@ -1,0 +1,54 @@
+name: Windows
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.cfg.os }}
+    name: ${{ matrix.cfg.os }}@${{ matrix.cfg.cxx }}-${{ matrix.cfg.cpp-version }}
+
+    strategy:
+      matrix:
+        cfg:
+          - {os: windows-latest, cc: cl, cxx: MSVC, cpp-version: 19.28.29333.0, generator: Ninja}
+          - {os: windows-latest, cc: cl, cxx: MSVC, cpp-version: 19.28.29333.0, generator: MinGW Makefiles}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+      with:
+        submodules: recursive
+
+    - name: Get latest CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Setup vcpkg and install dependencies
+      run: |
+        git clone https://github.com/microsoft/vcpkg
+        ./vcpkg/bootstrap-vcpkg.bat
+        ./vcpkg/vcpkg integrate install
+        ./vcpkg/vcpkg install eigen3:x64-windows
+
+    - name: Build with CMake and vcpkg
+      uses: lukka/run-cmake@v3
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+        useVcpkgToolchainFile: true
+        buildDirectory: '${{ runner.workspace }}/buildDirectory'
+        cmakeAppendedArgs: "-G\"${{ matrix.cfg.generator }}\" -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_DOCS:BOOL=OFF -DBUILD_TEST:BOOL=ON -DPYWRAP:BOOL=OFF -DVIEW:BOOL=OFF -DOMP:BOOL=OFF -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows"
+        cmakeBuildType: 'Release'
+        buildWithCMakeArgs: '--config Release --target install'
+
+    - name: Testing
+      run: |
+        cd testing
+        ./run_test.ps1
