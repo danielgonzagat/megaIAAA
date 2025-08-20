@@ -1,0 +1,4 @@
+goal:
+  description: "Calculate (4 + 3) * 2"
+  success_criteria:
+    - "Follow basic math rules, use commands"
