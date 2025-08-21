@@ -20,6 +20,13 @@ adapters:
   shadow_window: 200
   canary_traffic: 0.05
   promotion_thresholds:
-    ece: 0.05
-    latency_p95_ms: 1500
     cost_per_1k: 0.02
+guards:
+  lyapunov_deriv_max: 0.0
+  oci_minimum: 0.8
+  ece_limit: 0.05
+  latency_p95_ms: 1500
+budgets:
+  gpu_memory_gb: 24
+  token_usage: 1000000
+  hourly_cost: 5.0
