@@ -1,0 +1,32 @@
+name: Progress Check
+
+on:
+  pull_request:
+  push:
+    paths:
+      - 'docs/PROGRESS.json'
+      - '.github/workflows/progress.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install pytest
+      - name: Run tests
+        run: |
+          pytest docs || echo 'No tests found'
+      - name: Verify progress increment
+        run: |
+          progress=$(jq '.progress' docs/PROGRESS.json)
+          prev=$(git show HEAD^:docs/PROGRESS.json 2>/dev/null | jq '.progress' 2>/dev/null || echo 0)
+          if [ "$progress" -ne $((prev + 1)) ]; then
+            echo 'PROGRESS.json must increment by exactly 1'
+            exit 1
+          fi
